@@ -1,9 +1,9 @@
 import os
 import random
 import requests
-import google.generativeai as genai
+import json
 
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "").strip()
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
 
@@ -15,24 +15,33 @@ EXAMS = [
 ]
 
 def generate_notes():
-    if not GEMINI_API_KEY:
-        raise Exception("Gemini API Key missing hai! GitHub Secrets check karein.")
+    if not GROQ_API_KEY:
+        raise Exception("Groq API Key missing hai! GitHub Secrets check karein.")
         
-    # Google ki official library se API configuration (No URL/Headers headache)
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-1.5-flash')
-    
     topic = random.choice(EXAMS)
     prompt = f"Write a comprehensive study notes post in Hindi for competitive exams on topic: '{topic}'. Include top 5 bullet points with clear explanations."
     
-    print("Google SDK library ke through request bhej rahe hain...")
-    try:
-        response = model.generate_content(prompt)
-        return "📚 **Daily Exam Special Study Notes** 📚\n\n" + response.text
-    except Exception as e:
-        print("🚨 GEMINI SDK ERROR:")
-        print(str(e))
-        raise Exception("Google API Error! Upar error message padhein.")
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": "llama-3.3-70b-versatile",
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.7
+    }
+    
+    print("Groq AI ko request bhej rahe hain...")
+    response = requests.post(url, json=payload, headers=headers)
+    result = response.json()
+    
+    if 'choices' not in result:
+        print("🚨 GROQ API ERROR:")
+        print(json.dumps(result, indent=2))
+        raise Exception("Groq API Error! Logs check karein.")
+        
+    return "📚 **Daily Exam Special Study Notes** 📚\n\n" + result['choices'][0]['message']['content']
 
 def send_to_telegram(text):
     print("Telegram par message bhej rahe hain...")
