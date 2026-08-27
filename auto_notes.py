@@ -3,9 +3,10 @@ import random
 import requests
 import json
 
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
-TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
+# .strip() use kiya hai taaki agar key ke aage-pichhe koi space ho toh wo automatic hat jaye
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
 
 EXAMS = [
     "REET Exam Level 2 - Indian Geography Important One-Liners",
@@ -18,8 +19,14 @@ def generate_notes():
     topic = random.choice(EXAMS)
     prompt = f"Write a comprehensive study notes post in Hindi for competitive exams on topic: '{topic}'. Include top 5 bullet points with clear explanations."
     
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
-    headers = {"Content-Type": "application/json"}
+    # Yahan se '?key=' hata diya gaya hai
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+    
+    # API key ko properly Google ke format (x-goog-api-key) me Headers me bhej rahe hain
+    headers = {
+        "Content-Type": "application/json",
+        "x-goog-api-key": GEMINI_API_KEY
+    }
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
     
     print("Gemini API ko request bhej rahe hain...")
@@ -29,7 +36,7 @@ def generate_notes():
     if 'candidates' not in result:
         print("🚨 GEMINI API ERROR:")
         print(json.dumps(result, indent=2))
-        raise Exception("API Key invalid hai ya Secrets me set nahi hai. Upar logs check karein.")
+        raise Exception("Google API Error: Logs check karein.")
         
     return "📚 **Daily Exam Special Study Notes** 📚\n\n" + result['candidates'][0]['content']['parts'][0]['text']
 
@@ -42,7 +49,7 @@ def send_to_telegram(text):
     if response.status_code != 200:
         print("🚨 TELEGRAM API ERROR:")
         print(json.dumps(response.json(), indent=2))
-        raise Exception("Telegram posting fail ho gayi. Bot Admin access ya Chat ID check karein.")
+        raise Exception("Telegram posting fail ho gayi.")
 
 if __name__ == "__main__":
     notes = generate_notes()
