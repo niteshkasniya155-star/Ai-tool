@@ -3,7 +3,7 @@ import random
 import requests
 import json
 
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "").strip()
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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").strip()
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
 
