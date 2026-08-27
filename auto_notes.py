@@ -1,6 +1,7 @@
 import os
 import random
 import requests
+import json
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
@@ -17,30 +18,33 @@ def generate_notes():
     topic = random.choice(EXAMS)
     prompt = f"Write a comprehensive study notes post in Hindi for competitive exams on topic: '{topic}'. Include top 5 bullet points with clear explanations."
     
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
     headers = {"Content-Type": "application/json"}
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
     
+    print("Gemini API ko request bhej rahe hain...")
     response = requests.post(url, json=payload, headers=headers)
-    res_data = response.json()
+    result = response.json()
     
-    if "candidates" not in res_data:
-        print("Gemini API Error Response:", res_data)
-        raise Exception("Gemini API Error: Check API key in GitHub Secrets.")
+    if 'candidates' not in result:
+        print("🚨 GEMINI API ERROR:")
+        print(json.dumps(result, indent=2))
+        raise Exception("API Key invalid hai ya Secrets me set nahi hai. Upar logs check karein.")
         
-    return "📚 Daily Exam Special Study Notes 📚\n\n" + res_data['candidates'][0]['content']['parts'][0]['text']
+    return "📚 **Daily Exam Special Study Notes** 📚\n\n" + result['candidates'][0]['content']['parts'][0]['text']
 
 def send_to_telegram(text):
+    print("Telegram par message bhej rahe hain...")
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     payload = {"chat_id": TELEGRAM_CHAT_ID, "text": text}
-    res = requests.post(url, json=payload)
-    res_data = res.json()
+    response = requests.post(url, json=payload)
     
-    if res.status_code != 200:
-        print("Telegram API Error Response:", res_data)
-        raise Exception("Telegram API Error: Check Bot Admin Permissions.")
+    if response.status_code != 200:
+        print("🚨 TELEGRAM API ERROR:")
+        print(json.dumps(response.json(), indent=2))
+        raise Exception("Telegram posting fail ho gayi. Bot Admin access ya Chat ID check karein.")
 
 if __name__ == "__main__":
     notes = generate_notes()
     send_to_telegram(notes)
-    print("Successfully posted to Telegram!")
+    print("✅ SUCCESS! Notes Telegram par successfully post ho gaye.")
