@@ -18,12 +18,11 @@ jobs:
           python-version: '3.10'
 
       - name: Install dependencies
-        # Yahan humne Google ki library add ki hai
-        run: pip install requests google-generativeai
+        run: pip install requests
 
       - name: Run Auto Notes Script
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: '@govt_job_note'
         run: python auto_notes.py
